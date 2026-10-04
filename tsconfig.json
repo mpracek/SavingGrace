@@ -1,0 +1,10 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/shared-types" },
+    { "path": "packages/domain-matcher" },
+    { "path": "packages/rule-engine" },
+    { "path": "packages/configuration" },
+    { "path": "packages/database" }
+  ]
+}

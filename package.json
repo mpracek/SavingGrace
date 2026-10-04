@@ -1,0 +1,32 @@
+{
+  "name": "savinggrace",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "SavingGrace - local, browser-independent adult-content protection for Windows",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "typecheck": "tsc -b && tsc -p tests/tsconfig.json",
+    "lint": "eslint .",
+    "build": "tsc -b",
+    "test": "vitest run",
+    "test:unit": "vitest run --exclude tests/integration/**",
+    "test:integration": "vitest run tests/integration",
+    "package": "npm run build && node scripts/package.mjs",
+    "check": "npm run typecheck && npm run lint && npm run test && npm run build",
+    "agent:check": "cargo fmt --all -- --check && cargo clippy --all-targets -- -D warnings && cargo test"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.6.4",
+    "eslint": "^10.12.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.71.0",
+    "vitest": "^5.0.3"
+  }
+}

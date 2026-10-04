@@ -1,0 +1,14 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": false, "noEmit": true, "declaration": false,
+    "paths": {
+      "@savinggrace/shared-types": ["../packages/shared-types/src/index.ts"],
+      "@savinggrace/domain-matcher": ["../packages/domain-matcher/src/index.ts"],
+      "@savinggrace/rule-engine": ["../packages/rule-engine/src/index.ts"],
+      "@savinggrace/configuration": ["../packages/configuration/src/index.ts"],
+      "@savinggrace/database": ["../packages/database/src/index.ts"]
+    }
+  },
+  "include": ["./**/*.ts", "../vitest.config.ts"]
+}

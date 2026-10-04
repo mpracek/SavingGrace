@@ -1,0 +1,387 @@
+{
+ "_comment": "Shared vectors. Both the TypeScript packages and the Rust agent must satisfy every case.",
+ "normalize": [
+  [
+   "EXAMPLE.COM",
+   "example.com"
+  ],
+  [
+   "Example.Com.",
+   "example.com"
+  ],
+  [
+   "example.com:8080",
+   "example.com"
+  ],
+  [
+   "https://www.Example.com:443/path?q=1#frag",
+   "www.example.com"
+  ],
+  [
+   "http://user:pass@example.com/",
+   "example.com"
+  ],
+  [
+   "//example.com/x",
+   "example.com"
+  ],
+  [
+   "  example.com  ",
+   "example.com"
+  ],
+  [
+   "http://example.com\\@evil.com/",
+   "example.com"
+  ],
+  [
+   "http://evil.com\\@example.com/",
+   "evil.com"
+  ],
+  [
+   "bücher.example",
+   "xn--bcher-kva.example"
+  ],
+  [
+   "xn--bcher-kva.example",
+   "xn--bcher-kva.example"
+  ],
+  [
+   "BÜCHER.EXAMPLE",
+   "xn--bcher-kva.example"
+  ],
+  [
+   "http://[::1]:8080/",
+   "[::1]"
+  ],
+  [
+   "http://127.0.0.1:80/",
+   "127.0.0.1"
+  ],
+  [
+   "http://0x7f.1/",
+   "127.0.0.1"
+  ],
+  [
+   "",
+   null
+  ],
+  [
+   "   ",
+   null
+  ],
+  [
+   ".",
+   null
+  ],
+  [
+   "..",
+   null
+  ],
+  [
+   "example.com..",
+   null
+  ],
+  [
+   ".example.com",
+   null
+  ],
+  [
+   "exa mple.com",
+   null
+  ],
+  [
+   "exa\tmple.com",
+   null
+  ],
+  [
+   "a..b.com",
+   null
+  ],
+  [
+   "http://",
+   null
+  ],
+  [
+   "javascript:alert(1)",
+   null
+  ],
+  [
+   "file:///etc/passwd",
+   null
+  ],
+  [
+   "http://exa%20mple.com",
+   null
+  ],
+  [
+   "exam!ple.com",
+   null
+  ],
+  [
+   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.com",
+   null
+  ],
+  [
+   "http://[::1",
+   null
+  ],
+  [
+   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+   null
+  ]
+ ],
+ "match": [
+  [
+   "example.com",
+   "example.com",
+   true,
+   true
+  ],
+  [
+   "www.example.com",
+   "example.com",
+   true,
+   true
+  ],
+  [
+   "sub.example.com",
+   "example.com",
+   true,
+   true
+  ],
+  [
+   "a.b.example.com",
+   "example.com",
+   true,
+   true
+  ],
+  [
+   "EXAMPLE.COM.",
+   "example.com",
+   true,
+   true
+  ],
+  [
+   "www.example.com:8443",
+   "example.com",
+   true,
+   true
+  ],
+  [
+   "https://a.b.example.com/p?q",
+   "example.com",
+   true,
+   true
+  ],
+  [
+   "example.com.evil.com",
+   "example.com",
+   true,
+   false
+  ],
+  [
+   "evil-example.com",
+   "example.com",
+   true,
+   false
+  ],
+  [
+   "notexample.com",
+   "example.com",
+   true,
+   false
+  ],
+  [
+   "example.co",
+   "example.com",
+   true,
+   false
+  ],
+  [
+   "com",
+   "example.com",
+   true,
+   false
+  ],
+  [
+   "xexample.com",
+   "example.com",
+   true,
+   false
+  ],
+  [
+   "example.com",
+   "example.com",
+   false,
+   true
+  ],
+  [
+   "www.example.com",
+   "example.com",
+   false,
+   false
+  ],
+  [
+   "www.bücher.example",
+   "xn--bcher-kva.example",
+   true,
+   true
+  ],
+  [
+   "www.xn--bcher-kva.example",
+   "bücher.example",
+   true,
+   true
+  ],
+  [
+   "1.2.3.4",
+   "1.2.3.4",
+   true,
+   true
+  ],
+  [
+   "11.2.3.4",
+   "1.2.3.4",
+   true,
+   false
+  ],
+  [
+   "0.1.2.3.4",
+   "1.2.3.4",
+   true,
+   false
+  ]
+ ],
+ "validateRule": [
+  [
+   "com",
+   null
+  ],
+  [
+   "localhost",
+   null
+  ],
+  [
+   "not a domain",
+   null
+  ],
+  [
+   "HTTPS://WWW.Example.com/a",
+   [
+    "www.example.com",
+    true
+   ]
+  ],
+  [
+   "10.0.0.1",
+   [
+    "10.0.0.1",
+    false
+   ]
+  ]
+ ],
+ "engine": [
+  {
+   "name": "allowlist beats everything",
+   "allow": [
+    "example.com"
+   ],
+   "custom": [
+    "example.com"
+   ],
+   "global": [
+    "example.com"
+   ],
+   "target": "example.com",
+   "action": "ALLOW",
+   "ruleType": "allowlist"
+  },
+  {
+   "name": "custom beats global",
+   "allow": [],
+   "custom": [
+    "example.com"
+   ],
+   "global": [
+    "example.com"
+   ],
+   "target": "www.example.com",
+   "action": "BLOCK",
+   "ruleType": "custom_blocklist"
+  },
+  {
+   "name": "global blocks",
+   "allow": [],
+   "custom": [],
+   "global": [
+    "bad.example"
+   ],
+   "target": "https://x.bad.example/p",
+   "action": "BLOCK",
+   "ruleType": "global_blocklist"
+  },
+  {
+   "name": "default allow",
+   "allow": [],
+   "custom": [],
+   "global": [
+    "bad.example"
+   ],
+   "target": "good.example",
+   "action": "ALLOW",
+   "ruleType": "default"
+  },
+  {
+   "name": "lookalike allowed",
+   "allow": [],
+   "custom": [],
+   "global": [
+    "example.com"
+   ],
+   "target": "example.com.evil.com",
+   "action": "ALLOW",
+   "ruleType": "default"
+  },
+  {
+   "name": "allow subdomain only",
+   "allow": [
+    {
+     "domain": "safe.bad.example",
+     "includeSubdomains": false
+    }
+   ],
+   "custom": [],
+   "global": [
+    "bad.example"
+   ],
+   "target": "x.safe.bad.example",
+   "action": "BLOCK",
+   "ruleType": "global_blocklist"
+  },
+  {
+   "name": "allow subdomain exact",
+   "allow": [
+    {
+     "domain": "safe.bad.example",
+     "includeSubdomains": false
+    }
+   ],
+   "custom": [],
+   "global": [
+    "bad.example"
+   ],
+   "target": "safe.bad.example",
+   "action": "ALLOW",
+   "ruleType": "allowlist"
+  },
+  {
+   "name": "invalid input default allow",
+   "allow": [],
+   "custom": [],
+   "global": [],
+   "target": "not a host",
+   "action": "ALLOW",
+   "ruleType": "invalid_input"
+  }
+ ]
+}
