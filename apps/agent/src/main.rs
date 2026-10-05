@@ -56,11 +56,11 @@ fn real_main() -> anyhow::Result<()> {
             let _log = savinggrace_agent::logging::init(&dirs.logs_dir, true);
             runtime()?.block_on(async {
                 let endpoint = IpcEndpoint::default_for(&dirs);
-                let running = agent::start(AgentOptions { dirs, endpoint }).await?;
+                let running = agent::start(AgentOptions::new(dirs, endpoint)).await?;
                 tokio::signal::ctrl_c()
                     .await
                     .context("cannot listen for Ctrl+C")?;
-                running.shutdown().await;
+                running.shutdown(true).await;
                 anyhow::Ok(())
             })?;
         }

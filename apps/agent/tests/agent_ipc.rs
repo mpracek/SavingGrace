@@ -20,20 +20,21 @@ fn dirs_with(global: Option<&str>, config: Option<&str>) -> (tempfile::TempDir, 
     if let Some(g) = global {
         std::fs::write(&dirs.global_list_file, g).unwrap();
     }
-    if let Some(c) = config {
-        std::fs::write(&dirs.config_file, c).unwrap();
-    }
+    // Without an upstream resolver the agent is (correctly) degraded; tests supply a documentation-range one.
+    std::fs::write(
+        &dirs.config_file,
+        config.unwrap_or(r#"{"dnsUpstreams":["192.0.2.1"]}"#),
+    )
+    .unwrap();
     (tmp, dirs)
 }
 
 async fn boot(dirs: &DataDirs) -> (RunningAgent, IpcEndpoint) {
     let endpoint = IpcEndpoint::default_for(dirs);
-    let running = agent::start(AgentOptions {
-        dirs: dirs.clone(),
-        endpoint: endpoint.clone(),
-    })
-    .await
-    .unwrap();
+    let mut opts = AgentOptions::new(dirs.clone(), endpoint.clone());
+    // Never bind the real port 53 in tests.
+    opts.dns_listen_override = Some(vec!["127.0.0.1:0".parse().unwrap()]);
+    let running = agent::start(opts).await.unwrap();
     (running, endpoint)
 }
 
@@ -57,7 +58,9 @@ async fn healthy_boot_reports_running_and_never_claims_filtering() {
     assert_eq!(s["ok"], true);
     let r = &s["result"];
     assert_eq!(r["agentState"], "running");
-    assert_eq!(r["networkFiltering"], "not_implemented");
+    // The resolver listens, but nothing forces programs to use it: the agent must say "dns_only".
+    assert_eq!(r["networkFiltering"], "dns_only");
+    assert_eq!(r["enforcement"]["systemDns"]["state"], "unsupported");
     assert_eq!(r["rules"]["globalList"]["count"], 1);
     assert_eq!(r["rules"]["customBlocklist"], 1);
     assert_eq!(r["rules"]["allowlist"], 1);
@@ -67,7 +70,7 @@ async fn healthy_boot_reports_running_and_never_claims_filtering() {
 
     let p = call(&ep, &Request::Ping).await;
     assert_eq!(p["result"]["protocolVersion"], 1);
-    agent.shutdown().await;
+    agent.shutdown(true).await;
 }
 
 #[tokio::test]
@@ -98,7 +101,7 @@ async fn check_domain_applies_rule_priority_from_disk() {
         call(&ep, &check("not a host")).await["result"]["ruleType"],
         "invalid_input"
     );
-    agent.shutdown().await;
+    agent.shutdown(true).await;
 }
 
 #[tokio::test]
@@ -111,7 +114,7 @@ async fn missing_global_list_degrades_but_still_serves() {
         .as_str()
         .unwrap()
         .contains("global"));
-    agent.shutdown().await;
+    agent.shutdown(true).await;
 }
 
 #[tokio::test]
@@ -126,21 +129,23 @@ async fn invalid_config_falls_back_to_strict_defaults() {
     // Defaults, not the half-valid user file.
     assert_eq!(s["result"]["config"]["temporaryDisableEnabled"], true);
     assert_eq!(s["result"]["config"]["disableChallengeWordCount"], 50);
-    agent.shutdown().await;
+    agent.shutdown(true).await;
 }
 
 #[tokio::test]
 async fn valid_config_is_applied() {
     let (_t, dirs) = dirs_with(
         Some(GLOBAL_LIST),
-        Some(r#"{"disableChallengeWordCount": 25, "uiLanguage": "en"}"#),
+        Some(
+            r#"{"disableChallengeWordCount": 25, "uiLanguage": "en", "dnsUpstreams": ["192.0.2.1"]}"#,
+        ),
     );
     let (agent, ep) = boot(&dirs).await;
     let s = call(&ep, &Request::GetStatus).await;
     assert_eq!(s["result"]["agentState"], "running");
     assert_eq!(s["result"]["config"]["disableChallengeWordCount"], 25);
     assert_eq!(s["result"]["config"]["uiLanguage"], "en");
-    agent.shutdown().await;
+    agent.shutdown(true).await;
 }
 
 #[tokio::test]
@@ -163,7 +168,7 @@ async fn corrupt_database_degrades_instead_of_crashing() {
     )
     .await;
     assert_eq!(d["result"]["action"], "BLOCK");
-    agent.shutdown().await;
+    agent.shutdown(true).await;
 }
 
 #[tokio::test]
@@ -208,7 +213,7 @@ async fn protocol_abuse_is_rejected_without_killing_the_agent() {
 
     // Agent still healthy afterwards.
     assert_eq!(call(&ep, &Request::Ping).await["ok"], true);
-    agent.shutdown().await;
+    agent.shutdown(true).await;
 }
 
 #[tokio::test]
@@ -216,7 +221,7 @@ async fn shutdown_removes_endpoint_and_restart_works() {
     let (_t, dirs) = dirs_with(Some(GLOBAL_LIST), None);
     let (agent, ep) = boot(&dirs).await;
     assert!(ep.0.exists());
-    agent.shutdown().await;
+    agent.shutdown(true).await;
     assert!(!ep.0.exists());
     assert!(send_request(&ep, &Request::Ping).await.is_err());
 
@@ -226,7 +231,7 @@ async fn shutdown_removes_endpoint_and_restart_works() {
         call(&ep2, &Request::GetStatus).await["result"]["rules"]["globalList"]["count"],
         1
     );
-    agent2.shutdown().await;
+    agent2.shutdown(true).await;
 }
 
 #[tokio::test]
@@ -236,5 +241,5 @@ async fn stale_socket_from_a_crash_does_not_block_startup() {
     std::fs::write(&ep.0, b"stale").unwrap();
     let (agent, ep) = boot(&dirs).await;
     assert_eq!(call(&ep, &Request::Ping).await["ok"], true);
-    agent.shutdown().await;
+    agent.shutdown(true).await;
 }

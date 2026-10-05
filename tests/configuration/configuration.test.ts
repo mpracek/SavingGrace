@@ -17,6 +17,11 @@ describe('parseConfig', () => {
     expect(c.temporaryDisableEnabled).toBe(false);
     expect(c.attemptRetentionDays).toBe(90);
   });
+  it('accepts loopback listeners and upstreams with optional port', () => {
+    const c = parseConfig({ dnsListen: ['127.0.0.1:5353', '[::1]:5353'], dnsUpstreams: ['9.9.9.9', '[2620:fe::fe]:53'], enforceSystemProtection: false });
+    expect(c.dnsListen).toEqual(['127.0.0.1:5353', '[::1]:5353']);
+    expect(c.enforceSystemProtection).toBe(false);
+  });
   it('accepts English UI language', () => {
     expect(parseConfig({ uiLanguage: 'en' }).uiLanguage).toBe('en');
   });
@@ -34,6 +39,14 @@ describe('parseConfig', () => {
     [{ disableDurationsMinutes: [100000] }],
     [{ onInvalidInput: 'maybe' }],
     [{ uiLanguage: 'de' }],
+    [{ dnsListen: [] }],
+    [{ dnsListen: ['0.0.0.0:53'] }],
+    [{ dnsListen: ['192.168.1.5:53'] }],
+    [{ dnsListen: ['localhost'] }],
+    [{ dnsUpstreams: ['127.0.0.1'] }],
+    [{ dnsUpstreams: ['not-an-ip'] }],
+    [{ dnsUpstreams: ['0.0.0.0'] }],
+    [{ dnsEnabled: 'yes' }],
     [{ unknownKey: 1 }],
     [[]],
     [null],

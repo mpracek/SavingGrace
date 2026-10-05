@@ -70,6 +70,54 @@ impl RuleEngine {
         (self.allow.len(), self.custom.len(), self.global.len())
     }
 
+    /// Evaluates a name taken straight from a DNS packet.
+    ///
+    /// Unlike [`evaluate`](Self::evaluate) this never runs the name through a URL
+    /// parser: DNS labels may contain bytes such as `\\` or `@` that a URL parser
+    /// would reinterpret (`x\\.bad.example` would parse as host `x`), which would
+    /// let a hostile client hide a blocked name. Only lowercasing and removal of
+    /// one trailing dot happen here; suffix matching is purely label-based.
+    pub fn evaluate_dns_name(&self, name: &str) -> Decision {
+        let lower = name.to_ascii_lowercase();
+        let host = lower.strip_suffix('.').unwrap_or(&lower);
+        if host.is_empty() {
+            return self.default_decision(None);
+        }
+        self.decide_normalized(host)
+    }
+
+    fn default_decision(&self, host: Option<String>) -> Decision {
+        Decision {
+            action: Action::Allow,
+            rule_type: RuleType::Default,
+            matched_rule: None,
+            hostname: host,
+            category: None,
+            warnings: vec![],
+        }
+    }
+
+    fn decide_normalized(&self, host: &str) -> Decision {
+        let stages = [
+            (&self.allow, Action::Allow, RuleType::Allowlist),
+            (&self.custom, Action::Block, RuleType::CustomBlocklist),
+            (&self.global, Action::Block, RuleType::GlobalBlocklist),
+        ];
+        for (set, action, rule_type) in stages {
+            if let Some(e) = set.matching_normalized(host) {
+                return Decision {
+                    action,
+                    rule_type,
+                    matched_rule: Some(e.domain.clone()),
+                    hostname: Some(host.to_string()),
+                    category: e.category.clone(),
+                    warnings: vec![],
+                };
+            }
+        }
+        self.default_decision(Some(host.to_string()))
+    }
+
     pub fn evaluate(&self, target: &str) -> Decision {
         let Some(host) = normalize_hostname(target) else {
             return Decision {
@@ -84,31 +132,7 @@ impl RuleEngine {
                 warnings: vec![],
             };
         };
-        let stages = [
-            (&self.allow, Action::Allow, RuleType::Allowlist),
-            (&self.custom, Action::Block, RuleType::CustomBlocklist),
-            (&self.global, Action::Block, RuleType::GlobalBlocklist),
-        ];
-        for (set, action, rule_type) in stages {
-            if let Some(e) = set.matching_normalized(&host) {
-                return Decision {
-                    action,
-                    rule_type,
-                    matched_rule: Some(e.domain.clone()),
-                    hostname: Some(host),
-                    category: e.category.clone(),
-                    warnings: vec![],
-                };
-            }
-        }
-        Decision {
-            action: Action::Allow,
-            rule_type: RuleType::Default,
-            matched_rule: None,
-            hostname: Some(host),
-            category: None,
-            warnings: vec![],
-        }
+        self.decide_normalized(&host)
     }
 }
 

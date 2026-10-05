@@ -33,7 +33,7 @@ jobs:
       - run: cargo clippy --all-targets -- -D warnings
       - run: cargo test
       - run: cargo build --release
-      - name: Windows service smoke test (install, status over named pipe, crash recovery, uninstall)
+      - name: Windows smoke test (service, DNS enforcement, bypass attempts, Chrome/Edge, tamper repair, crash recovery, uninstall)
         shell: pwsh
         run: ./scripts/smoke-windows.ps1
 

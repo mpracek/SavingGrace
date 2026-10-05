@@ -2,6 +2,7 @@
 //! Unknown keys and out-of-range values are errors, never silently ignored.
 
 use serde::{Deserialize, Serialize};
+use std::net::{IpAddr, SocketAddr};
 use std::path::Path;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -30,6 +31,14 @@ pub struct AppConfig {
     pub attempt_retention_days: u32,
     pub on_invalid_input: InvalidInputPolicy,
     pub ui_language: UiLanguage,
+    /// Run the local filtering DNS resolver.
+    pub dns_enabled: bool,
+    /// Loopback addresses the resolver listens on (UDP and TCP).
+    pub dns_listen: Vec<String>,
+    /// Upstream resolvers (IPs, optional port). Empty = discover the system's original DNS servers.
+    pub dns_upstreams: Vec<String>,
+    /// Redirect system DNS, install firewall filters and browser policies. Disable for development only.
+    pub enforce_system_protection: bool,
 }
 
 impl Default for AppConfig {
@@ -42,6 +51,10 @@ impl Default for AppConfig {
             attempt_retention_days: 90,
             on_invalid_input: InvalidInputPolicy::Allow,
             ui_language: UiLanguage::Slovenian,
+            dns_enabled: true,
+            dns_listen: vec!["127.0.0.1:53".into(), "[::1]:53".into()],
+            dns_upstreams: vec![],
+            enforce_system_protection: true,
         }
     }
 }
@@ -56,6 +69,14 @@ fn fail<T>(msg: impl Into<String>) -> Result<T, ConfigError> {
     Err(ConfigError {
         problems: vec![msg.into()],
     })
+}
+
+/// Parses `ip` or `ip:port` (IPv6 as `[::1]:53`); the port defaults to 53.
+pub fn parse_upstream(s: &str) -> Option<SocketAddr> {
+    if let Ok(sa) = s.parse::<SocketAddr>() {
+        return Some(sa);
+    }
+    s.parse::<IpAddr>().ok().map(|ip| SocketAddr::new(ip, 53))
 }
 
 /// Parses and validates a JSON config; missing keys take the defaults.
@@ -88,6 +109,24 @@ pub fn parse_config(json: &str) -> Result<AppConfig, ConfigError> {
     if !(1..=3650).contains(&cfg.attempt_retention_days) {
         problems.push("attemptRetentionDays must be an integer 1..3650".to_string());
     }
+    if cfg.dns_listen.is_empty() {
+        problems.push("dnsListen must not be empty".to_string());
+    }
+    for a in &cfg.dns_listen {
+        match a.parse::<SocketAddr>() {
+            Ok(sa) if sa.ip().is_loopback() => {}
+            Ok(_) => problems.push(format!("dnsListen \"{a}\" must be a loopback address (the resolver must never be reachable from the network)")),
+            Err(_) => problems.push(format!("dnsListen \"{a}\" is not a valid ip:port")),
+        }
+    }
+    for u in &cfg.dns_upstreams {
+        match parse_upstream(u) {
+            Some(sa) if !sa.ip().is_loopback() && !sa.ip().is_unspecified() => {}
+            _ => problems.push(format!(
+                "dnsUpstreams \"{u}\" must be a non-loopback IP address, optionally with :port"
+            )),
+        }
+    }
     if !problems.is_empty() {
         return Err(ConfigError { problems });
     }
@@ -118,6 +157,8 @@ mod tests {
         assert_eq!(c.disable_durations_minutes, vec![5, 15, 30, 60]);
         assert_eq!(c.ui_language, UiLanguage::Slovenian);
         assert_eq!(parse_config("{}").unwrap(), c);
+        assert!(c.dns_enabled && c.enforce_system_protection);
+        assert_eq!(c.dns_listen, vec!["127.0.0.1:53", "[::1]:53"]);
     }
 
     #[test]
@@ -126,6 +167,16 @@ mod tests {
         assert_eq!(c.disable_challenge_word_count, 75);
         assert_eq!(c.disable_durations_minutes, vec![5, 30]);
         assert_eq!(c.ui_language, UiLanguage::English);
+    }
+
+    #[test]
+    fn accepts_loopback_listeners_and_upstreams_with_default_port() {
+        let c = parse_config(
+            r#"{"dnsListen":["127.0.0.1:5353"],"dnsUpstreams":["9.9.9.9","[2620:fe::fe]:53"]}"#,
+        )
+        .unwrap();
+        assert_eq!(parse_upstream(&c.dns_upstreams[0]).unwrap().port(), 53);
+        assert_eq!(parse_upstream(&c.dns_upstreams[1]).unwrap().port(), 53);
     }
 
     #[test]
@@ -142,6 +193,14 @@ mod tests {
             r#"{"onInvalidInput":"maybe"}"#,
             r#"{"uiLanguage":"de"}"#,
             r#"{"unknownKey":1}"#,
+            r#"{"dnsListen":[]}"#,
+            r#"{"dnsListen":["0.0.0.0:53"]}"#,
+            r#"{"dnsListen":["192.168.1.5:53"]}"#,
+            r#"{"dnsListen":["localhost"]}"#,
+            r#"{"dnsUpstreams":["127.0.0.1"]}"#,
+            r#"{"dnsUpstreams":["not-an-ip"]}"#,
+            r#"{"dnsUpstreams":["0.0.0.0"]}"#,
+            r#"{"dnsEnabled":"yes"}"#,
             "[]",
             "null",
             "{ not json",

@@ -5,7 +5,9 @@
 
 pub mod agent;
 pub mod config;
+pub mod dns;
 pub mod domain;
+pub mod enforce;
 pub mod ipc;
 pub mod logging;
 pub mod paths;

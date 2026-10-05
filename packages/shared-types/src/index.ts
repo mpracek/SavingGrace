@@ -76,4 +76,12 @@ export interface AppConfig {
   readonly onInvalidInput: InvalidInputPolicy;
   /** Admin UI language. */
   readonly uiLanguage: UiLanguage;
+  /** Run the local filtering DNS resolver. */
+  readonly dnsEnabled: boolean;
+  /** Loopback ip:port addresses the resolver listens on. */
+  readonly dnsListen: readonly string[];
+  /** Upstream resolvers; empty = discover the system's original DNS servers. */
+  readonly dnsUpstreams: readonly string[];
+  /** Redirect system DNS, install firewall filters and browser policies (dev toggle). */
+  readonly enforceSystemProtection: boolean;
 }

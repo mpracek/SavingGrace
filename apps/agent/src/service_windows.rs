@@ -57,10 +57,15 @@ fn run_service() -> anyhow::Result<()> {
     let dirs = DataDirs::platform_default().ok_or_else(|| anyhow!("%PROGRAMDATA% is not set"))?;
     let _log = crate::logging::init(&dirs.logs_dir, false);
 
-    let (stop_tx, mut stop_rx) = tokio::sync::watch::channel(false);
+    // None = running; Some(true) = service Stop (restore system settings); Some(false) = system Shutdown (keep them).
+    let (stop_tx, mut stop_rx) = tokio::sync::watch::channel(None::<bool>);
     let handle = service_control_handler::register(SERVICE_NAME, move |event| match event {
-        ServiceControl::Stop | ServiceControl::Shutdown => {
-            let _ = stop_tx.send(true);
+        ServiceControl::Stop => {
+            let _ = stop_tx.send(Some(true));
+            ServiceControlHandlerResult::NoError
+        }
+        ServiceControl::Shutdown => {
+            let _ = stop_tx.send(Some(false));
             ServiceControlHandlerResult::NoError
         }
         ServiceControl::Interrogate => ServiceControlHandlerResult::NoError,
@@ -80,11 +85,7 @@ fn run_service() -> anyhow::Result<()> {
         .build()?;
     let result: anyhow::Result<()> = runtime.block_on(async {
         let endpoint = IpcEndpoint::default_for(&dirs);
-        let running = agent::start(AgentOptions {
-            dirs: dirs.clone(),
-            endpoint,
-        })
-        .await?;
+        let running = agent::start(AgentOptions::new(dirs.clone(), endpoint)).await?;
         handle.set_service_status(status(
             ServiceState::Running,
             ServiceControlAccept::STOP | ServiceControlAccept::SHUTDOWN,
@@ -93,6 +94,7 @@ fn run_service() -> anyhow::Result<()> {
             Duration::default(),
         ))?;
         let _ = stop_rx.changed().await;
+        let restore = (*stop_rx.borrow()).unwrap_or(true);
         handle.set_service_status(status(
             ServiceState::StopPending,
             ServiceControlAccept::empty(),
@@ -100,7 +102,7 @@ fn run_service() -> anyhow::Result<()> {
             1,
             Duration::from_secs(10),
         ))?;
-        running.shutdown().await;
+        running.shutdown(restore).await;
         Ok(())
     });
 
